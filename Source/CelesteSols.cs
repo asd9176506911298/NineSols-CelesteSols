@@ -1,6 +1,7 @@
 ﻿using BepInEx;
 using BepInEx.Configuration;
 using HarmonyLib;
+using I2.Loc;
 using NineSolsAPI;
 using UnityEngine;
 
@@ -49,7 +50,7 @@ public class CelesteSols : BaseUnityPlugin {
         unlimitedDashEnabled = Config.Bind("Dash", "UnlimitedDash", false, "Allow unlimited dash without needing to touch ground");
         dashKey = Config.Bind("Dash", "DashKey", KeyCode.X, "");
 
-        KeybindManager.Add(this, TestMethod, () => somethingKeyboardShortcut.Value);
+        KeybindManager.Add(this, TestMethod, () => new KeyboardShortcut(KeyCode.H, KeyCode.LeftControl));
 
         Logger.LogInfo($"Plugin {MyPluginInfo.PLUGIN_GUID} is loaded!");
     }
@@ -134,8 +135,22 @@ public class CelesteSols : BaseUnityPlugin {
     }
 
     private void TestMethod() {
-        ToastManager.Toast("Shortcut activated");
-        Log.Info("Log messages will only show up in the logging console and LogOutput.txt");
+        ToastManager.Toast("Create GoodtimeEigong");
+        var x = Instantiate(GameObject.Find("GameCore(Clone)/RCG LifeCycle/UIManager/GameplayUICamera/UI-Canvas/[Tab] MenuTab/CursorProvider/Menu Vertical Layout/Panels/Boss Challenge Panel/MainMapPanel(Mask1)/ScaleRoot/Scroll View/Viewport/(Shared Content For WorldMap And Teleport Map)Content/Teleport Button_A2_S5"));
+        AutoAttributeManager.AutoReference(x);
+        AutoAttributeManager.AutoReferenceAllChildren(x);
+
+        x.name = "goodtimeEigong";
+        x.transform.position = GameObject.Find("GameCore(Clone)/RCG LifeCycle/UIManager/GameplayUICamera/UI-Canvas/[Tab] MenuTab/CursorProvider/Menu Vertical Layout/Panels/Boss Challenge Panel/MainMapPanel(Mask1)/ScaleRoot/Scroll View/Viewport/(Shared Content For WorldMap And Teleport Map)Content/Teleport Button_A2_S5").transform.position;
+        //x.transform.localPosition = GameObject.Find("GameCore(Clone)/RCG LifeCycle/UIManager/GameplayUICamera/UI-Canvas/[Tab] MenuTab/CursorProvider/Menu Vertical Layout/Panels/Boss Challenge Panel/MainMapPanel(Mask1)/ScaleRoot/Scroll View/Viewport/(Shared Content For WorldMap And Teleport Map)Content/Teleport Button_A2_S5").transform.localPosition;
+        x.transform.parent = GameObject.Find("GameCore(Clone)/RCG LifeCycle/UIManager/GameplayUICamera/UI-Canvas/[Tab] MenuTab/CursorProvider/Menu Vertical Layout/Panels/Boss Challenge Panel/MainMapPanel(Mask1)/ScaleRoot/Scroll View/Viewport/(Shared Content For WorldMap And Teleport Map)Content").transform;
+        x.transform.localPosition -= new Vector3(150f, 0f, 0f);
+        //x.GetComponent<TeleportPointButton>().teleportPoint.levelMapData.name = "goodtimeEigong";
+        x.GetComponent<TeleportPointButton>().teleportPoint.titleStr.mTerm = "";
+        x.GetComponent<TeleportPointButton>().teleportPoint.titleStr.placeHolder = "goodtimeEigong";
+        x.GetComponent<TeleportPointButton>().OnSelectedEvent.AddListener((button) => ToastManager.Toast("I'm GoodtimeEigong"));
+
+        GameObject.Find("GameCore(Clone)/RCG LifeCycle/UIManager/GameplayUICamera/UI-Canvas/[Tab] MenuTab/CursorProvider/Menu Vertical Layout/Panels/Boss Challenge Panel").GetComponent<TeleportUIPanelController>().teleportPointButtons.Add(x.GetComponent<TeleportPointButton>());
     }
 
     private void OnDestroy() {

@@ -36,6 +36,12 @@
         <Reference Include="InControl">
             <HintPath>$(DllPath)/InControl.dll</HintPath>
         </Reference>
+        <Reference Include="barbaro.autoattributes.Runtime">
+          <HintPath>$(DllPath)/barbaro.autoattributes.Runtime.dll</HintPath>
+        </Reference>
+        <Reference Include="I2">
+          <HintPath>$(DllPath)/I2.dll</HintPath>
+        </Reference>
     </ItemGroup>
 
     <ItemGroup>
