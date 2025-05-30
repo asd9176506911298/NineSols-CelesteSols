@@ -32,7 +32,7 @@ public class CelesteSols : BaseUnityPlugin {
     private Vector2 lastDashDirection = Vector2.zero;
     private Vector2 lastDashVelocity = Vector2.zero;
     private float dashBoostMemoryDuration = 0.2f;
-    private float boostStrengthMultiplier = 1.2f;
+    private float boostStrengthMultiplier = 1.9f;
     private float boostVerticalMinimum = 300f;
 
     private void Awake() {
@@ -107,13 +107,13 @@ public class CelesteSols : BaseUnityPlugin {
             if (boost.y < boostVerticalMinimum)
                 boost.y = boostVerticalMinimum;
 
-            Player.i.Velocity += boost;
+            Player.i.Velocity = boost; // ✅ 完全取代速度（不是 +=）
             Logger.LogInfo($"[Boost Jump] boost={boost}");
         } else {
-            // 正常跳（只有沒 boost 時才執行）
             Player.i.Velocity = new Vector2(Player.i.Velocity.x, -300f);
         }
     }
+
 
     private Vector2 GetDashDirection() {
         bool up = Player.i.playerInput.gameplayActions.MoveUp.IsPressed;
