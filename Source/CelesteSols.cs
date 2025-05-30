@@ -14,31 +14,26 @@ public class CelesteSols : BaseUnityPlugin {
     private ConfigEntry<KeyCode> dashKey = null!;
 
     public static bool isFallEnable = false;
-
     private Harmony harmony = null!;
 
-    // Dash parameters
-    private float dashSpeed = 350f;
-    private float dashMaxDuration = 0.3f;
+    // Dash state
+    private float dashSpeed = 340f;
+    private float dashDuration = 0.15f;
     private float dashTimeElapsed = 0f;
-    private Vector2 dashVelocity;
-    private Vector2 currentDashDirection = Vector2.zero;
     private bool isDashing = false;
-    private bool canDash = true;
+    private Vector2 dashVelocity;
 
-    // Boost parameters
+    // Dash count
+    private int maxDashes = 1;
+    private int currentDashes = 1;
+
+    // Boost logic
     private float lastDashEndTime = -999f;
-    private float dashBoostMemoryDuration = 0.2f;
     private Vector2 lastDashDirection = Vector2.zero;
     private Vector2 lastDashVelocity = Vector2.zero;
-    [SerializeField] private float boostStrengthMultiplier = 1.2f;
-    [SerializeField] private float boostVerticalMinimum = 300f;
-
-    private AnimationCurve dashSpeedCurve = new(
-        new Keyframe(0f, 1f, 0f, 0f),
-        new Keyframe(0.8f, 1f, 0f, 0f),
-        new Keyframe(1f, 0f, -20f, 0f)
-    );
+    private float dashBoostMemoryDuration = 0.2f;
+    private float boostStrengthMultiplier = 1.2f;
+    private float boostVerticalMinimum = 300f;
 
     private void Awake() {
         Log.Init(Logger);
@@ -55,57 +50,68 @@ public class CelesteSols : BaseUnityPlugin {
     }
 
     private void FixedUpdate() {
-        if (Player.i.onGround || unlimitedDashEnabled.Value) canDash = true;
+        // 重設 Dash（觸地 or 無限）
+        if (Player.i.onGround || unlimitedDashEnabled.Value)
+            currentDashes = maxDashes;
 
-        if (canDash && Input.GetKeyDown(dashKey.Value)) {
+        // 啟動 Dash
+        if (!isDashing && currentDashes > 0 && Input.GetKeyDown(dashKey.Value)) {
             Vector2 dir = GetDashDirection();
             if (dir != Vector2.zero) {
-                StartDash(dir.normalized * dashSpeed);
-                canDash = false;
+                StartDash(dir.normalized);
             }
         }
 
+        // Dash 持續中
         if (isDashing) {
             dashTimeElapsed += Time.deltaTime;
-            float t = Mathf.Clamp01(dashTimeElapsed / dashMaxDuration);
-            float speedMultiplier = dashSpeedCurve.Evaluate(t);
-            Player.i.Velocity = dashVelocity * speedMultiplier;
-            if (t >= 1f) EndDash();
+            Player.i.Velocity = dashVelocity;
+
+            if (dashTimeElapsed >= dashDuration) {
+                EndDash();
+            }
         }
 
+        // Dash-Jump Boost
         if (Player.i.playerInput.gameplayActions.Jump.IsPressed && !Player.i.CanJump && Player.i.onGround) {
             if (isDashing) EndDash();
-            Jump();
+            JumpWithBoost();
         }
     }
 
-    private void StartDash(Vector2 velocity) {
+    private void StartDash(Vector2 dir) {
         isDashing = true;
         dashTimeElapsed = 0f;
-        dashVelocity = velocity;
-        currentDashDirection = velocity.normalized;
+        dashVelocity = dir * dashSpeed;
+        currentDashes--;
+
+        lastDashDirection = dir;
+        lastDashVelocity = dashVelocity;
+        lastDashEndTime = -999f;
         isFallEnable = false;
     }
 
     private void EndDash() {
         isDashing = false;
         isFallEnable = true;
-
         lastDashEndTime = Time.time;
-        lastDashDirection = currentDashDirection.normalized;
-        lastDashVelocity = dashVelocity;
     }
 
-    private void Jump() {
+    private void JumpWithBoost() {
         float sinceDash = Time.time - lastDashEndTime;
-        bool recentDash = sinceDash <= dashBoostMemoryDuration;
+        bool canBoost = sinceDash <= dashBoostMemoryDuration;
         bool downAndSide = lastDashDirection.y < -0.1f && Mathf.Abs(lastDashDirection.x) > 0.1f;
 
-        if (recentDash && downAndSide) {
+        if (canBoost && downAndSide) {
             Vector2 boost = lastDashDirection.normalized * lastDashVelocity.magnitude * boostStrengthMultiplier;
-            if (boost.y < boostVerticalMinimum) boost.y = boostVerticalMinimum;
+            if (boost.y < boostVerticalMinimum)
+                boost.y = boostVerticalMinimum;
+
             Player.i.Velocity += boost;
-            Logger.LogInfo($"[Boost] Applied! dir={lastDashDirection}, mag={lastDashVelocity.magnitude}, boost={boost}");
+            Logger.LogInfo($"[Boost Jump] boost={boost}");
+        } else {
+            // 正常跳（只有沒 boost 時才執行）
+            Player.i.Velocity = new Vector2(Player.i.Velocity.x, -300f);
         }
     }
 
@@ -116,10 +122,8 @@ public class CelesteSols : BaseUnityPlugin {
         bool right = Player.i.playerInput.gameplayActions.MoveRight.IsPressed;
 
         bool onGround = Player.i.onGround;
-
-        if (onGround) {
-            if ((down && left) || (down && right)) return Vector2.zero;
-        }
+        if (onGround && ((down && left) || (down && right)))
+            return Vector2.zero;
 
         if (up && left) return new Vector2(-1, 1);
         if (up && right) return new Vector2(1, 1);
