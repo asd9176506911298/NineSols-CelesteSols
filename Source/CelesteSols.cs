@@ -13,18 +13,18 @@ public class CelesteSols : BaseUnityPlugin {
     private ConfigEntry<KeyboardShortcut> somethingKeyboardShortcut = null!;
 
     public static bool isFallEnable = false;
-    private float dashSpeed = 500f;
-    private float dashDuration = 0.2f;
+    private float dashSpeed = 350f;
     Vector2 dashVelocity;
-    float dashTimer = 0f;
     private AnimationCurve dashSpeedCurve = new AnimationCurve(
     new Keyframe(0f, 1f, 0f, 0f),         // 開始瞬間最高速
     new Keyframe(0.8f, 1f, 0f, 0f),       // 中段保持
     new Keyframe(1f, 0f, -20f, 0f)        // 結尾快速減速
 );
+    private bool canDash = true;
+    private bool isDashing = false;
     private float dashTimeElapsed = 0f;
+    private float dashMaxDuration = 0.3f; // 確保不會一直 dash（防止卡住）
 
-    bool isDashing = false;
 
     private Harmony harmony = null!;
 
@@ -44,39 +44,43 @@ public class CelesteSols : BaseUnityPlugin {
         Logger.LogInfo($"Plugin {MyPluginInfo.PLUGIN_GUID} is loaded!");
     }
 
-    void StartDash(Vector2 dashVelocity) {
+    void StartDash(Vector2 velocity) {
         isDashing = true;
-        dashTimer = dashDuration;
         dashTimeElapsed = 0f;
-
+        dashVelocity = velocity;
         isFallEnable = false;
-
-        this.dashVelocity = dashVelocity;
     }
 
     void EndDash() {
         isDashing = false;
-
         isFallEnable = true;
     }
 
     private void FixedUpdate() {
-        if (!isDashing && Input.GetKeyDown(KeyCode.L)) {
+        // 落地重置 dash
+        if (Player.i.onGround && !isDashing) {
+            canDash = true;
+        }
+
+        // 開始 Dash（只能一次）
+        if (!isDashing && canDash && Input.GetKeyDown(KeyCode.L)) {
             Vector2 dir = GetDashDirection();
             if (dir != Vector2.zero) {
                 StartDash(dir.normalized * dashSpeed);
+                canDash = false;
             }
         }
 
+        // Dash 中
         if (isDashing) {
-            dashTimer -= Time.deltaTime;
             dashTimeElapsed += Time.deltaTime;
 
-            float t = Mathf.Clamp01(dashTimeElapsed / dashDuration);
+            float t = Mathf.Clamp01(dashTimeElapsed / dashMaxDuration);
             float speedMultiplier = dashSpeedCurve.Evaluate(t);
             Player.i.Velocity = dashVelocity * speedMultiplier;
 
-            if (dashTimer <= 0f) {
+            // 停止 Dash 條件
+            if (t >= 1f || Player.i.onGround) {
                 EndDash();
             }
         }
