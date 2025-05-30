@@ -9,8 +9,8 @@ namespace CelesteSols;
 [BepInDependency(NineSolsAPICore.PluginGUID)]
 [BepInPlugin(MyPluginInfo.PLUGIN_GUID, MyPluginInfo.PLUGIN_NAME, MyPluginInfo.PLUGIN_VERSION)]
 public class CelesteSols : BaseUnityPlugin {
-    private ConfigEntry<bool> enableSomethingConfig = null!;
     private ConfigEntry<KeyboardShortcut> somethingKeyboardShortcut = null!;
+    private ConfigEntry<KeyCode> dashKey = null!;
 
     public static bool isFallEnable = false;
 
@@ -45,8 +45,8 @@ public class CelesteSols : BaseUnityPlugin {
 
         harmony = Harmony.CreateAndPatchAll(typeof(CelesteSols).Assembly);
 
-        enableSomethingConfig = Config.Bind("General.Something", "Enable", true, "Enable the thing");
         somethingKeyboardShortcut = Config.Bind("General.Something", "Shortcut", new KeyboardShortcut(KeyCode.H, KeyCode.LeftControl), "Shortcut to execute");
+        dashKey = Config.Bind("", "dashKey", KeyCode.X, "");
 
         KeybindManager.Add(this, TestMethod, () => somethingKeyboardShortcut.Value);
 
@@ -56,7 +56,7 @@ public class CelesteSols : BaseUnityPlugin {
     private void FixedUpdate() {
         if (Player.i.onGround) canDash = true;
 
-        if (canDash && Input.GetKeyDown(KeyCode.X)) {
+        if (canDash && Input.GetKeyDown(dashKey.Value)) {
             Vector2 dir = GetDashDirection();
             if (dir != Vector2.zero) {
                 StartDash(dir.normalized * dashSpeed);
@@ -109,10 +109,10 @@ public class CelesteSols : BaseUnityPlugin {
     }
 
     private Vector2 GetDashDirection() {
-        bool up = Input.GetKey(KeyCode.UpArrow);
-        bool down = Input.GetKey(KeyCode.DownArrow);
-        bool left = Input.GetKey(KeyCode.LeftArrow);
-        bool right = Input.GetKey(KeyCode.RightArrow);
+        bool up = Player.i.playerInput.gameplayActions.MoveUp.IsPressed;
+        bool down = Player.i.playerInput.gameplayActions.MoveDown.IsPressed;
+        bool left = Player.i.playerInput.gameplayActions.MoveLeft.IsPressed;
+        bool right = Player.i.playerInput.gameplayActions.MoveRight.IsPressed;
 
         bool onGround = Player.i.onGround;
 
@@ -133,7 +133,6 @@ public class CelesteSols : BaseUnityPlugin {
     }
 
     private void TestMethod() {
-        if (!enableSomethingConfig.Value) return;
         ToastManager.Toast("Shortcut activated");
         Log.Info("Log messages will only show up in the logging console and LogOutput.txt");
     }
