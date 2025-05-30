@@ -34,6 +34,7 @@ public class CelesteSols : BaseUnityPlugin {
     private Vector2 lastDashDirection = Vector2.zero;
 
 
+
     private Harmony harmony = null!;
 
     private void Awake() {
@@ -139,10 +140,18 @@ public class CelesteSols : BaseUnityPlugin {
         bool left = Input.GetKey(KeyCode.A);
         bool right = Input.GetKey(KeyCode.D);
 
+        bool onGround = Player.i.onGround;
+
+        // ⛔ 在地面上禁止 ↙ ↘ 方向，只允許 ↓
+        if (onGround) {
+            if (down && left) return Vector2.zero;
+            if (down && right) return Vector2.zero;
+        }
+
         if (up && left) return new Vector2(-1, 1);
         if (up && right) return new Vector2(1, 1);
         if (up) return new Vector2(0, 1);
-        if (down && left) return new Vector2(-1, -1);   
+        if (down && left) return new Vector2(-1, -1);
         if (down && right) return new Vector2(1, -1);
         if (down) return new Vector2(0, -1);
         if (left) return new Vector2(-1, 0);
@@ -150,6 +159,7 @@ public class CelesteSols : BaseUnityPlugin {
 
         return Vector2.zero;
     }
+
 
     private void TestMethod() {
         if (!enableSomethingConfig.Value) return;
