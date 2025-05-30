@@ -64,13 +64,15 @@ public class CelesteSols : BaseUnityPlugin {
 
     void EndDash() {
         isDashing = false;
-        isFallEnable = true;
-        canDash = true;
+        isFallEnable = true;    
 
         lastDashEndTime = Time.time;
         lastDashDirection = currentDashDirection.normalized;
-        lastDashVelocity = Player.i.Velocity;
+        lastDashVelocity = dashVelocity; // 直接記錄初始 dashVelocity，而不是尾速
     }
+
+    [SerializeField] private float boostStrengthMultiplier = 1.2f;
+    [SerializeField] private float boostVerticalMinimum = 560f;
 
     void Jump() {
         float sinceDash = Time.time - lastDashEndTime;
@@ -79,9 +81,19 @@ public class CelesteSols : BaseUnityPlugin {
         bool downAndSide = lastDashDirection.y < -0.1f && Mathf.Abs(lastDashDirection.x) > 0.1f;
 
         if (recentDash && downAndSide) {
-            Vector2 boost = new Vector2(lastDashVelocity.x * 1.2f, 420f); // x 根據 dash，y 固定
+            float dashSpeedMagnitude = lastDashVelocity.magnitude;
+
+            Vector2 boostDir = lastDashDirection.normalized;
+            Vector2 boost = boostDir * dashSpeedMagnitude * boostStrengthMultiplier;
+
+            // 額外補強 Y 分量，避免 boost 偏水平
+            if (boost.y < boostVerticalMinimum) {
+                boost.y = boostVerticalMinimum;
+            }
+
             Player.i.Velocity += boost;
-            Logger.LogInfo($"[Boost] Applied! vel={lastDashVelocity}");
+
+            Logger.LogInfo($"[Boost] Applied! dir={boostDir}, dashMag={dashSpeedMagnitude}, finalBoost={boost}");
         }
     }
 
@@ -90,7 +102,7 @@ public class CelesteSols : BaseUnityPlugin {
             canDash = true;
         }
 
-        if (canDash && Input.GetKeyDown(KeyCode.L)) {
+        if (canDash && Input.GetKeyDown(KeyCode.L) ) {
             Vector2 dir = GetDashDirection();
             if (dir != Vector2.zero) {
                 StartDash(dir.normalized * dashSpeed);
@@ -109,8 +121,8 @@ public class CelesteSols : BaseUnityPlugin {
                 EndDash();
             }
         }
-
-        if (Input.GetKeyDown(KeyCode.Space) && Player.i.onGround) {
+        //ToastManager.Toast(Player.i.playerInput.gameplayActions.Jump.IsPressed);
+        if (Player.i.playerInput.gameplayActions.Jump.IsPressed && !Player.i.CanJump && Player.i.onGround) {
             if (isDashing) {
                 EndDash(); // 提前結束 dash
             }
