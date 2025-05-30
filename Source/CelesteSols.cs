@@ -60,13 +60,16 @@ public class CelesteSols : BaseUnityPlugin {
         isFallEnable = false;
     }
 
+    private Vector2 lastDashVelocity = Vector2.zero;
+
     void EndDash() {
         isDashing = false;
         isFallEnable = true;
-        canDash = true; 
+        canDash = true;
 
         lastDashEndTime = Time.time;
         lastDashDirection = currentDashDirection.normalized;
+        lastDashVelocity = Player.i.Velocity;
     }
 
     void Jump() {
@@ -76,10 +79,9 @@ public class CelesteSols : BaseUnityPlugin {
         bool downAndSide = lastDashDirection.y < -0.1f && Mathf.Abs(lastDashDirection.x) > 0.1f;
 
         if (recentDash && downAndSide) {
-            float xBoost = lastDashDirection.x * 300f;
-            float yBoost = 420f;
-            Player.i.Velocity += new Vector2(xBoost, yBoost);
-            Logger.LogInfo($"[Boost] Applied! dir={lastDashDirection}");
+            Vector2 boost = new Vector2(lastDashVelocity.x * 1.2f, 420f); // x 根據 dash，y 固定
+            Player.i.Velocity += boost;
+            Logger.LogInfo($"[Boost] Applied! vel={lastDashVelocity}");
         }
     }
 
@@ -108,7 +110,7 @@ public class CelesteSols : BaseUnityPlugin {
             }
         }
 
-        if (Input.GetKeyDown(KeyCode.Space)) {
+        if (Input.GetKeyDown(KeyCode.Space) && Player.i.onGround) {
             if (isDashing) {
                 EndDash(); // 提前結束 dash
             }
