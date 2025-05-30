@@ -3,7 +3,7 @@
 ## Set up your mod
 1. Set up modding with BepInEx and r2modman: [Wiki: Getting Started](https://github.com/nine-sols-modding/Resources/wiki/Getting-started)
    1. download the `NineSolsAPI` mod if you want to use it, 
-2. clone this repo ([generate from this template](https://github.com/new?template_name=NineSols-ExampleMod&template_owner=jakobhellermann), then update the `.csproj`
+2. clone this repo ([generate from this template](https://github.com/new?template_name=NineSols-CelesteSols&template_owner=jakobhellermann), then update the `.csproj`
    1. Change `<AssemblyName>` to your mod name
    2. Make sure the `<NineSolsPath>` points to the installed game
 3. Install `tcli` tool for building thunderstore mods: `dotnet tool install -g tcli`
@@ -20,7 +20,7 @@ If you run
 ```sh
 dotnet publish
 ```
-it will build the DLL of your mod (`Source/bin/Release/netstandard2.1/publish/ExampleMod.dll`), then use `tcli` to
+it will build the DLL of your mod (`Source/bin/Release/netstandard2.1/publish/CelesteSols.dll`), then use `tcli` to
 package the mod into a thunderstore-compatible zip in `thunderstore/build/`.
 
 You can import that mod into your r2modman instance like this:
@@ -42,7 +42,7 @@ Building the mod and restarting the game after every minor change becomes cumber
 
 Download the [ScriptEngine](https://thunderstore.io/c/nine-sols/p/ninesolsmodding/BepinExScriptEngine/) mod in your r2modman instance, and the game will be able to reload DLLs from `r2modmanProfileFolder/BepInEx/scripts/`.
 
-Go into the `ExampleMod.csproj` file and fill out the `<ProfileDir>` and uncomment the `<CopyDir>` below it.
+Go into the `CelesteSols.csproj` file and fill out the `<ProfileDir>` and uncomment the `<CopyDir>` below it.
 Now, whenever you hit "Build" in your IDE, the mod DLL will be placed into that `scripts` folder.
 
 Note: **Disable your mod in r2modman if it is active to prevent it from being loaded twice!**
