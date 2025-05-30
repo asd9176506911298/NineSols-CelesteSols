@@ -20,10 +20,18 @@ public class CelesteSols : BaseUnityPlugin {
     new Keyframe(0.8f, 1f, 0f, 0f),       // 中段保持
     new Keyframe(1f, 0f, -20f, 0f)        // 結尾快速減速
 );
+    private Vector2 currentDashDirection = Vector2.zero;
+    private Vector2 lastDashDir = Vector2.zero;
+    private bool queuedBoost = false;
+
     private bool canDash = true;
     private bool isDashing = false;
     private float dashTimeElapsed = 0f;
     private float dashMaxDuration = 0.3f; // 確保不會一直 dash（防止卡住）
+
+    private float lastDashEndTime = -999f;
+    private float dashBoostMemoryDuration = 0.2f; // 可容忍 boost 的最大時間
+    private Vector2 lastDashDirection = Vector2.zero;
 
 
     private Harmony harmony = null!;
@@ -48,22 +56,39 @@ public class CelesteSols : BaseUnityPlugin {
         isDashing = true;
         dashTimeElapsed = 0f;
         dashVelocity = velocity;
+        currentDashDirection = velocity.normalized;
         isFallEnable = false;
     }
 
     void EndDash() {
         isDashing = false;
         isFallEnable = true;
+        canDash = true; 
+
+        lastDashEndTime = Time.time;
+        lastDashDirection = currentDashDirection.normalized;
+    }
+
+    void Jump() {
+        float sinceDash = Time.time - lastDashEndTime;
+
+        bool recentDash = sinceDash <= dashBoostMemoryDuration;
+        bool downAndSide = lastDashDirection.y < -0.1f && Mathf.Abs(lastDashDirection.x) > 0.1f;
+
+        if (recentDash && downAndSide) {
+            float xBoost = lastDashDirection.x * 300f;
+            float yBoost = 420f;
+            Player.i.Velocity += new Vector2(xBoost, yBoost);
+            Logger.LogInfo($"[Boost] Applied! dir={lastDashDirection}");
+        }
     }
 
     private void FixedUpdate() {
-        // 落地重置 dash
-        if (Player.i.onGround && !isDashing) {
+        if (Player.i.onGround) {
             canDash = true;
         }
 
-        // 開始 Dash（只能一次）
-        if (!isDashing && canDash && Input.GetKeyDown(KeyCode.L)) {
+        if (canDash && Input.GetKeyDown(KeyCode.L)) {
             Vector2 dir = GetDashDirection();
             if (dir != Vector2.zero) {
                 StartDash(dir.normalized * dashSpeed);
@@ -71,7 +96,6 @@ public class CelesteSols : BaseUnityPlugin {
             }
         }
 
-        // Dash 中
         if (isDashing) {
             dashTimeElapsed += Time.deltaTime;
 
@@ -79,12 +103,20 @@ public class CelesteSols : BaseUnityPlugin {
             float speedMultiplier = dashSpeedCurve.Evaluate(t);
             Player.i.Velocity = dashVelocity * speedMultiplier;
 
-            // 停止 Dash 條件
-            if (t >= 1f || Player.i.onGround) {
+            if (t >= 1f) {
                 EndDash();
             }
         }
+
+        if (Input.GetKeyDown(KeyCode.Space)) {
+            if (isDashing) {
+                EndDash(); // 提前結束 dash
+            }
+
+            Jump(); // boost 包在裡面
+        }
     }
+
 
 
     private Vector2 GetDashDirection() {
