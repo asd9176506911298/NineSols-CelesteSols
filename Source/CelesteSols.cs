@@ -9,6 +9,7 @@ namespace CelesteSols;
 [BepInDependency(NineSolsAPICore.PluginGUID)]
 [BepInPlugin(MyPluginInfo.PLUGIN_GUID, MyPluginInfo.PLUGIN_NAME, MyPluginInfo.PLUGIN_VERSION)]
 public class CelesteSols : BaseUnityPlugin {
+    private ConfigEntry<bool> unlimitedDashEnabled = null!;
     private ConfigEntry<KeyboardShortcut> somethingKeyboardShortcut = null!;
     private ConfigEntry<KeyCode> dashKey = null!;
 
@@ -45,8 +46,8 @@ public class CelesteSols : BaseUnityPlugin {
 
         harmony = Harmony.CreateAndPatchAll(typeof(CelesteSols).Assembly);
 
-        somethingKeyboardShortcut = Config.Bind("General.Something", "Shortcut", new KeyboardShortcut(KeyCode.H, KeyCode.LeftControl), "Shortcut to execute");
-        dashKey = Config.Bind("", "dashKey", KeyCode.X, "");
+        unlimitedDashEnabled = Config.Bind("Dash", "UnlimitedDash", false, "Allow unlimited dash without needing to touch ground");
+        dashKey = Config.Bind("Dash", "DashKey", KeyCode.X, "");
 
         KeybindManager.Add(this, TestMethod, () => somethingKeyboardShortcut.Value);
 
@@ -54,7 +55,7 @@ public class CelesteSols : BaseUnityPlugin {
     }
 
     private void FixedUpdate() {
-        if (Player.i.onGround) canDash = true;
+        if (Player.i.onGround || unlimitedDashEnabled.Value) canDash = true;
 
         if (canDash && Input.GetKeyDown(dashKey.Value)) {
             Vector2 dir = GetDashDirection();
