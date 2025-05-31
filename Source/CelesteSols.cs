@@ -2,6 +2,7 @@
 using BepInEx.Configuration;
 using HarmonyLib;
 using NineSolsAPI;
+using System;
 using UnityEngine;
 
 namespace CelesteSols;
@@ -17,7 +18,7 @@ public class CelesteSols : BaseUnityPlugin {
     private Harmony harmony = null!;
 
     // Dash state
-    private float dashSpeed = 340f;
+    private float dashSpeed = 360f;                // 原始 dash 速度提高
     private float dashDuration = 0.15f;
     private float dashTimeElapsed = 0f;
     private bool isDashing = false;
@@ -32,7 +33,7 @@ public class CelesteSols : BaseUnityPlugin {
     private Vector2 lastDashDirection = Vector2.zero;
     private Vector2 lastDashVelocity = Vector2.zero;
     private float dashBoostMemoryDuration = 0.2f;
-    private float boostStrengthMultiplier = 1.9f;
+    private float boostStrengthMultiplier = 2.1f;
     private float boostVerticalMinimum = 300f;
 
     private void Awake() {
@@ -44,7 +45,7 @@ public class CelesteSols : BaseUnityPlugin {
         unlimitedDashEnabled = Config.Bind("Dash", "UnlimitedDash", false, "Allow unlimited dash without needing to touch ground");
         dashKey = Config.Bind("Dash", "DashKey", KeyCode.X, "");
 
-        KeybindManager.Add(this, TestMethod, () => somethingKeyboardShortcut.Value);
+        KeybindManager.Add(this, TestMethod, () => new KeyboardShortcut(KeyCode.H, KeyCode.LeftControl));
 
         Logger.LogInfo($"Plugin {MyPluginInfo.PLUGIN_GUID} is loaded!");
     }
@@ -104,10 +105,10 @@ public class CelesteSols : BaseUnityPlugin {
 
         if (canBoost && downAndSide) {
             Vector2 boost = lastDashDirection.normalized * lastDashVelocity.magnitude * boostStrengthMultiplier;
-            if (boost.y < boostVerticalMinimum)
-                boost.y = boostVerticalMinimum;
 
-            Player.i.Velocity = boost; // ✅ 完全取代速度（不是 +=）
+            boost.y = Math.Abs(boost.y) / 2;
+
+            Player.i.Velocity = boost;
             Logger.LogInfo($"[Boost Jump] boost={boost}");
         } else {
             Player.i.Velocity = new Vector2(Player.i.Velocity.x, -300f);
@@ -137,7 +138,7 @@ public class CelesteSols : BaseUnityPlugin {
         return Vector2.zero;
     }
 
-    private void TestMethod() {
+    private void TestMethod() {     
         ToastManager.Toast("Shortcut activated");
         Log.Info("Log messages will only show up in the logging console and LogOutput.txt");
     }
