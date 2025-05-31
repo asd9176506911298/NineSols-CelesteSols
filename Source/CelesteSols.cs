@@ -14,7 +14,7 @@ public class CelesteSols : BaseUnityPlugin {
     private ConfigEntry<KeyboardShortcut> somethingKeyboardShortcut = null!;
     private ConfigEntry<KeyCode> dashKey = null!;
 
-    public static bool isFallEnable = false;
+    public static bool isFallEnable = true;
     private Harmony harmony = null!;
 
     // Dash state
