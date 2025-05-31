@@ -1,6 +1,7 @@
 ﻿using BepInEx;
 using BepInEx.Configuration;
 using HarmonyLib;
+using InControl;
 using NineSolsAPI;
 using System;
 using UnityEngine;
@@ -56,7 +57,7 @@ public class CelesteSols : BaseUnityPlugin {
             currentDashes = maxDashes;
 
         // 啟動 Dash
-        if (!isDashing && currentDashes > 0 && Input.GetKey(dashKey.Value)) {
+        if (!isDashing && currentDashes > 0 && (Input.GetKey(dashKey.Value) || (InputManager.ActiveDevice.LeftStickButton.IsPressed))) {
             Vector2 dir = GetDashDirection();
             StartDash(GetFixedDashVector(dir));
         }
@@ -168,6 +169,7 @@ public class CelesteSols : BaseUnityPlugin {
     private void TestMethod() {     
         ToastManager.Toast("Shortcut activated");
         Log.Info("Log messages will only show up in the logging console and LogOutput.txt");
+        
     }
 
     private void OnDestroy() {
