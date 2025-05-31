@@ -58,9 +58,7 @@ public class CelesteSols : BaseUnityPlugin {
         // 啟動 Dash
         if (!isDashing && currentDashes > 0 && Input.GetKeyDown(dashKey.Value)) {
             Vector2 dir = GetDashDirection();
-            if (dir != Vector2.zero) {
-                StartDash(dir.normalized);
-            }
+            StartDash(GetFixedDashVector(dir));
         }
 
         // Dash 持續中
@@ -83,9 +81,27 @@ public class CelesteSols : BaseUnityPlugin {
     private void StartDash(Vector2 dir) {
         isDashing = true;
         dashTimeElapsed = 0f;
-        dashVelocity = dir * dashSpeed;
-        currentDashes--;
 
+        // 基礎 dash
+        Vector2 baseDash = dir * dashSpeed;
+
+        // 加入部分當前速度（動量感）
+        Vector2 momentum = Vector2.zero;
+
+        // 只在空中加入動量（或你也可以在地面開啟）
+        if (!Player.i.onGround) {
+            Vector2 rawMomentum = Player.i.Velocity;
+
+            // 放大 Y 軸動量，模仿 Celeste 衝刺往右下強衝的感覺
+            float xMomentum = rawMomentum.x * 0.5f;
+            float yMomentum = rawMomentum.y * 1.2f; // 加強 Y 軸向下動量
+
+            momentum = new Vector2(xMomentum, yMomentum);
+        }
+
+        dashVelocity = baseDash + momentum;
+
+        currentDashes--;
         lastDashDirection = dir;
         lastDashVelocity = dashVelocity;
         lastDashEndTime = -999f;
@@ -110,21 +126,32 @@ public class CelesteSols : BaseUnityPlugin {
 
             Player.i.Velocity = boost;
             Logger.LogInfo($"[Boost Jump] boost={boost}");
-        } else {
-            Player.i.Velocity = new Vector2(Player.i.Velocity.x, -300f);
         }
     }
 
+    private Vector2 GetFixedDashVector(Vector2 dir) {
+        // 防止方向為零
+        if (dir == Vector2.zero) return Vector2.zero;
+
+        // 四個主要方向保持不變
+        if (dir == Vector2.up) return new Vector2(0, 1);
+        if (dir == Vector2.down) return new Vector2(0, -1);
+        if (dir == Vector2.left) return new Vector2(-1, 0);
+        if (dir == Vector2.right) return new Vector2(1, 0);
+
+        // 八方向 dash（對角線）：給固定比例，防止 normalized 把速度平分
+        float diagMultiplier = 0.8f; // Celeste 類遊戲中常用值是 0.75~0.85
+        return new Vector2(
+        Mathf.Sign(dir.x) * diagMultiplier,
+        Mathf.Sign(dir.y) * diagMultiplier
+      );
+    }
 
     private Vector2 GetDashDirection() {
         bool up = Player.i.playerInput.gameplayActions.MoveUp.IsPressed;
         bool down = Player.i.playerInput.gameplayActions.MoveDown.IsPressed;
         bool left = Player.i.playerInput.gameplayActions.MoveLeft.IsPressed;
         bool right = Player.i.playerInput.gameplayActions.MoveRight.IsPressed;
-
-        bool onGround = Player.i.onGround;
-        if (onGround && ((down && left) || (down && right)))
-            return Vector2.zero;
 
         if (up && left) return new Vector2(-1, 1);
         if (up && right) return new Vector2(1, 1);
