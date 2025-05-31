@@ -93,7 +93,7 @@ public class CelesteSols : BaseUnityPlugin {
             Vector2 rawMomentum = Player.i.Velocity;
 
             // 放大 Y 軸動量，模仿 Celeste 衝刺往右下強衝的感覺
-            float xMomentum = rawMomentum.x * 0.5f;
+            float xMomentum = rawMomentum.x * 0.8f;
             float yMomentum = rawMomentum.y * 1.2f; // 加強 Y 軸向下動量
 
             momentum = new Vector2(xMomentum, yMomentum);
