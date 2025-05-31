@@ -59,7 +59,7 @@ public class CelesteSols : BaseUnityPlugin {
         // 啟動 Dash
         if (!isDashing && currentDashes > 0 && (Input.GetKey(dashKey.Value) || (InputManager.ActiveDevice.LeftStickButton.IsPressed))) {
             Vector2 dir = GetDashDirection();
-            StartDash(GetFixedDashVector(dir));
+            StartDash(GetFixedDashVector(dir)); 
         }
 
         // Dash 持續中
@@ -126,7 +126,7 @@ public class CelesteSols : BaseUnityPlugin {
             boost.y = Math.Abs(boost.y) / 2;
 
             Player.i.Velocity = boost;
-            Logger.LogInfo($"[Boost Jump] boost={boost}");
+            //Logger.LogInfo($"[Boost Jump] boost={boost}");
         }
     }
 
