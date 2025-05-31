@@ -56,7 +56,7 @@ public class CelesteSols : BaseUnityPlugin {
             currentDashes = maxDashes;
 
         // 啟動 Dash
-        if (!isDashing && currentDashes > 0 && Input.GetKeyDown(dashKey.Value)) {
+        if (!isDashing && currentDashes > 0 && Input.GetKey(dashKey.Value)) {
             Vector2 dir = GetDashDirection();
             StartDash(GetFixedDashVector(dir));
         }
